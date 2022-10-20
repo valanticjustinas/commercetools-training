@@ -1,6 +1,7 @@
-import { ClientResponse, Cart, CustomerSignin, CustomerSignInResult, Order, OrderFromCartDraft, OrderState } from "@commercetools/platform-sdk";
+import { ClientResponse, Cart, CustomerSignin, CustomerSignInResult, Order, OrderFromCartDraft, OrderState, OrderFromQuoteDraft } from "@commercetools/platform-sdk";
 import { apiRoot } from "./client";
 import { getCustomerByKey } from "./customer";
+import { getQuoteById, getQuoteRequestById } from "./quotes";
 
 export const createCart = (customerKey: string): Promise<ClientResponse<Cart>> =>
     getCustomerByKey(customerKey)
@@ -83,6 +84,34 @@ export const addDiscountCodeToCart = (cartId: string, discountCode: string): Pro
             .execute()
         );
 
+export const addDirectDiscountToCart = (cartId: string, percent: number): Promise<ClientResponse<Cart>> =>
+    getCartById(cartId)
+        .then(cart => apiRoot
+            .carts()
+            .withId({ ID: cartId })
+            .post({
+                body: {
+                    version: cart.body.version,
+                    actions: [{
+                        action: "setDirectDiscounts",
+                        discounts: [
+                            {
+                                value: {
+                                    type: "relative",
+                                    permyriad: percent * 100,
+                                },
+                                target: {
+                                    type: "lineItems",
+                                    predicate: "1 = 1"
+                                }
+                            }
+                        ]
+                    }]
+                }
+            })
+            .execute()
+        );
+
 export const recalculate = (cartId: string): Promise<ClientResponse<Cart>> =>
     getCartById(cartId).then(cart =>
         apiRoot
@@ -147,8 +176,33 @@ export const createOrderFromCart = (cartId: string): Promise<ClientResponse<Orde
 const createOrderFromCartDraft = (cartId: string): Promise<OrderFromCartDraft> =>
     getCartById(cartId).then(cart => {
         return {
-            id: cart.body.id,
+            cart: {
+                  id: cartId,
+                  typeId: "cart"
+            },
             version: cart.body.version,
+        };
+    });
+
+export const createOrderFromQuote = (quoteId: string): Promise<ClientResponse<Order>> =>
+    createOrderFromQuoteDraft(quoteId).then(orderFromQuoteDraft =>
+        apiRoot
+            .orders()
+            .orderQuote()
+            .post({
+                body: orderFromQuoteDraft
+            })
+            .execute()
+    );
+
+const createOrderFromQuoteDraft = (quoteId: string): Promise<OrderFromQuoteDraft> =>
+    getQuoteById(quoteId).then(quote => {
+        return {
+            quote: {
+                   id: quoteId,
+                   typeId: "quote"
+            },
+            version: quote.body.version
         };
     });
 
