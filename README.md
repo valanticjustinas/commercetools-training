@@ -12,6 +12,13 @@ https://github.com/commercetools/commercetools-ts-sdk-training
 Add API Client Credentials in .env.sample then remove the ".sample" file name should be only ".env"
 then follow your trainer instructions to solve the exercises.
 
+## Dockerization
+
+To avoid npm installation on local machine there is an option to use docker compose by 
+running `docker compose up -d` command, which starts the docker container.
+
+To access the docker container run `docker compose exec node bash` command
+
 ## Installation for npm users
 
 Use the command `npm install` to install dependencies
